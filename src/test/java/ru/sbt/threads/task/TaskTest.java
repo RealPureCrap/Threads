@@ -38,8 +38,7 @@ public class TaskTest {
         assertTrue("Some tasks results are not the same", allValuesMatch(values));
     }
 
-//    @Test(expected=ExecutionException.class)
-    @Test(expected=IllegalFormatCodePointException.class)
+    @Test(expected=ExecutionException.class)
     public void shouldThrowTaskExceptionForFailingAction() throws Exception {
         Task<String> task = new Task<>(new FailingAction());
         Future<String> future = executor.submit(task::get);
