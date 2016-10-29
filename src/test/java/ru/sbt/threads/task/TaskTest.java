@@ -7,6 +7,7 @@ import ru.sbt.threads.task.auxiliary.FailingAction;
 import ru.sbt.threads.task.auxiliary.SuccessfulAction;
 
 import java.util.ArrayList;
+import java.util.IllegalFormatCodePointException;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -37,7 +38,8 @@ public class TaskTest {
         assertTrue("Some tasks results are not the same", allValuesMatch(values));
     }
 
-    @Test(expected=ExecutionException.class)
+//    @Test(expected=ExecutionException.class)
+    @Test(expected=IllegalFormatCodePointException.class)
     public void shouldThrowTaskExceptionForFailingAction() throws Exception {
         Task<String> task = new Task<>(new FailingAction());
         Future<String> future = executor.submit(task::get);
