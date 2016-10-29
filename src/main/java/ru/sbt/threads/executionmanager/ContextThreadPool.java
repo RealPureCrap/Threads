@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class ContextThreadPool extends ThreadPoolExecutor {
+
     private final Runnable lastTask;
     private final List<Runnable> notStartedTasks;
     private final Object lock = new Object();
@@ -17,8 +18,7 @@ public class ContextThreadPool extends ThreadPoolExecutor {
     private int interruptedTaskCounter = 0;
 
     public ContextThreadPool(Runnable lastTask, Runnable... tasks) {
-        super(5, 10, 5, TimeUnit.SECONDS,
-                new ArrayBlockingQueue<>(tasks.length, false));
+        super(5, 10, 5, TimeUnit.SECONDS, new ArrayBlockingQueue<>(tasks.length, false));
         notStartedTasks = new ArrayList<>(Arrays.asList(tasks));
         this.lastTask = lastTask;
     }
@@ -87,5 +87,4 @@ public class ContextThreadPool extends ThreadPoolExecutor {
             execute(lastTask);
         }
     }
-
 }

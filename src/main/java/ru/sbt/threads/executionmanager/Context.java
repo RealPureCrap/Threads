@@ -1,6 +1,7 @@
 package ru.sbt.threads.executionmanager;
 
-public interface Context {
+interface Context {
+
     int getCompletedTaskCount();
 
     int getFailedTaskCount();

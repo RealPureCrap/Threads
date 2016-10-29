@@ -1,88 +1,74 @@
 package ru.sbt.threads.task;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
+import ru.sbt.threads.task.auxiliary.FailingAction;
+import ru.sbt.threads.task.auxiliary.SuccessfulAction;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TaskTest {
-    private Task<String> stringTask = new Task<>(() -> {
-        Thread.sleep(2000);
-        return "result";
-    });
 
-    private Task<String> stringTaskWithException = new Task<>(() -> {
-        Thread.sleep(2000);
-        throw new IllegalArgumentException();
-    });
+    private ExecutorService executor;
 
-    @Test
-    public void getUsualResult() throws Exception {
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        List<Future<String>> results = new ArrayList<>();
-        List<Callable<String>> tasks = new ArrayList<>();
-        tasks.add(stringTask::get);
-        tasks.add(stringTask::get);
-        tasks.add(stringTask::get);
-        tasks.add(stringTask::get);
-        tasks.add(stringTask::get);
+    @Before
+    public void setUp() throws Exception {
+        executor = Executors.newFixedThreadPool(5);
+    }
 
-        long startTime = System.currentTimeMillis();
-        for (Callable<String> task : tasks) {
-            results.add(executor.submit(task));
-        }
-        executor.invokeAll(tasks);
-        long endTime = System.currentTimeMillis();
+    @After
+    public void tearDown() throws Exception {
         executor.shutdown();
-
-        assertTrue(endTime - startTime < 2100);
-
-        String result = results.get(0).get();
-        assertEquals(result, results.get(1).get());
-        assertEquals(result, results.get(2).get());
-        assertEquals(result, results.get(3).get());
-        assertEquals(result, results.get(4).get());
     }
 
     @Test
-    public void getResultWithException() throws Exception {
-        ExecutorService executor = Executors.newFixedThreadPool(5);
-        List<Future<String>> results = new ArrayList<>();
-        List<Callable<String>> tasks = new ArrayList<>();
-        tasks.add(stringTaskWithException::get);
-        tasks.add(stringTaskWithException::get);
-        tasks.add(stringTaskWithException::get);
-        tasks.add(stringTaskWithException::get);
-        tasks.add(stringTaskWithException::get);
+    public void shouldResultInTheSameValueForTheSameSuccessfulAction() throws Exception {
+        Task<String> task = new Task<>(new SuccessfulAction());
+        List<Callable<String>> tasks = createTasksBasedOn(task);
+        List<Future<String>> futures = executor.invokeAll(tasks);
 
-        long startTime = System.currentTimeMillis();
-        for (Callable<String> task : tasks) {
-            results.add(executor.submit(task));
-        }
-        executor.invokeAll(tasks);
-        long endTime = System.currentTimeMillis();
-        executor.shutdown();
+        List<String> values = resolve(futures);
 
-        assertTrue(endTime - startTime < 2100);
-
-        Exception exception = null;
-        try{
-            String result = results.get(0).get();
-        }
-        catch (ExecutionException e){
-            exception = (TaskException) e.getCause();
-        }
-
-        try{
-            String result = results.get(1).get();
-        }
-        catch (ExecutionException e){
-            assertEquals(exception, e.getCause());
-        }
+        assertTrue("Some tasks results are not the same", allValuesMatch(values));
     }
 
+    @Test(expected=ExecutionException.class)
+    public void shouldThrowTaskExceptionForFailingAction() throws Exception {
+        Task<String> task = new Task<>(new FailingAction());
+        Future<String> future = executor.submit(task::get);
+
+        future.get();
+    }
+
+    private List<Callable<String>> createTasksBasedOn(Task<String> task) {
+        List<Callable<String>> result = new ArrayList<>();
+
+        result.add(task::get);
+        result.add(task::get);
+        result.add(task::get);
+        result.add(task::get);
+        result.add(task::get);
+
+        return result;
+    }
+
+    private <T> List<T> resolve(List<Future<T>> futures) throws Exception {
+        List<T> result = new ArrayList<>();
+
+        for (Future<T> future : futures) {
+            result.add(future.get());
+        }
+
+        return result;
+    }
+
+    private <T> boolean allValuesMatch(List<T> list) throws Exception {
+        T firstValue = list.get(0);
+        return list.stream().allMatch(elem -> elem.equals(firstValue));
+    }
 }

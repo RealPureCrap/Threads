@@ -10,6 +10,7 @@ import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 public class ExecutionManagerImplTest {
+
     private final List<String> resultFromUsualTasks = new ArrayList<>();
     private String resultFromFinalTask = null;
 
