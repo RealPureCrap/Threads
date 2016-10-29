@@ -42,6 +42,7 @@ public class TaskPerformanceTest {
         executor = Executors.newFixedThreadPool(5);
 
         this.tasks = new ArrayList<>();
+
         tasks.add(templateTask::get);
         tasks.add(templateTask::get);
         tasks.add(templateTask::get);
